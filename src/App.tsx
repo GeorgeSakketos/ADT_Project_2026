@@ -203,16 +203,14 @@ export default function App() {
     <main className="app-shell">
       <section className="hero">
         <div className="hero-copy">
-          <span className="eyebrow">Anime Discovery Tool</span>
-          <h1>Search a seed anime, resolve its MAL ID, and print recommendations straight to the console.</h1>
+          <h1>What are you watching next?</h1>
           <p>
-            Start with a familiar title like <strong>The Witch from Mercury</strong> or <strong>Clannad</strong>,
-            then let Jikan do the lookups.
+            Start with a familiar <strong>title</strong> and let <strong>us</strong> find your next favorite anime.
           </p>
         </div>
 
         <form className="search-card" onSubmit={handleSubmit}>
-          <label htmlFor="seed">Seed anime</label>
+          <label htmlFor="seed">Seed Anime</label>
           <div className="search-row">
             <input
               id="seed"
@@ -225,7 +223,7 @@ export default function App() {
               {loading ? 'Resolving...' : 'Discover'}
             </button>
           </div>
-          <p className="helper-text">Searches the title, fetches the MAL ID, then pulls recommendations and niche picks.</p>
+          <p className="helper-text">Search based on your favorite anime title</p>
         </form>
       </section>
 
@@ -233,10 +231,13 @@ export default function App() {
 
       <section className="results-grid">
         <article className="panel">
-          <h2>Seed lookup</h2>
+          <h2>Your Favorite Anime</h2>
           {seedAnime ? (
-            <div className="seed-summary">
-              <img src={seedAnime.images?.jpg?.image_url} alt={seedAnime.title} />
+            <div className="seed-summary centered">
+              <img
+                src={details?.images?.jpg?.image_url ?? seedAnime.images?.jpg?.image_url}
+                alt={seedAnime.title}
+              />
               <div>
                 <h3>{seedAnime.title}</h3>
                 <p>MAL ID: {seedAnime.mal_id}</p>
@@ -244,6 +245,22 @@ export default function App() {
             </div>
           ) : (
             <p className="empty-state">Your resolved anime will appear here.</p>
+          )}
+        </article>
+
+        <article className="panel">
+          <h2>What we Recommend you watch next!</h2>
+          {recommendations.length > 0 ? (
+            <ul className="result-list">
+              {recommendations.slice(0, 5).map((item) => (
+                <li key={item.entry.mal_id}>
+                  <span>{item.entry.title}</span>
+                  <small>{item.votes} votes</small>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="empty-state">Recommendation payload will print to the console and show a preview here.</p>
           )}
         </article>
 
@@ -261,22 +278,6 @@ export default function App() {
             </div>
           ) : (
             <p className="empty-state">Genre and studio data will appear after lookup.</p>
-          )}
-        </article>
-
-        <article className="panel">
-          <h2>Recommendation engine</h2>
-          {recommendations.length > 0 ? (
-            <ul className="result-list">
-              {recommendations.slice(0, 5).map((item) => (
-                <li key={item.entry.mal_id}>
-                  <span>{item.entry.title}</span>
-                  <small>{item.votes} votes</small>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="empty-state">Recommendation payload will print to the console and show a preview here.</p>
           )}
         </article>
 
