@@ -44,6 +44,23 @@ type AnimeItem = {
   trailer?: AnimeTrailer;
 };
 
+type RelationEntry = {
+  mal_id: number;
+  type: string;
+  name: string;
+  url: string;
+};
+
+type AnimeRelation = {
+  relation: string;
+  entry: RelationEntry[];
+};
+
+type RecommendationEntry = {
+  entry: AnimeItem;
+  votes: number;
+};
+
 type JikanResponse<T> = {
   data: T;
 };
@@ -67,12 +84,8 @@ type AnimeDetailsProps = {
   anime: AnimeItem | null;
   onBack: () => void;
   recommendations: RecommendationEntry[];
+  relations: AnimeRelation[];
   onRecommendationSelect: (anime: AnimeItem) => void;
-};
-
-type RecommendationEntry = {
-  entry: AnimeItem;
-  votes: number;
 };
 
 type ViewState = 'home' | 'search' | 'details';
@@ -101,6 +114,10 @@ const fetchAnimeDetails = async (id: number): Promise<JikanResponse<AnimeItem>> 
   return fetchJson<JikanResponse<AnimeItem>>(`${JIKAN_API_BASE}/anime/${id}`);
 };
 
+const fetchAnimeRelations = async (id: number): Promise<JikanResponse<AnimeRelation[]>> => {
+  return fetchJson<JikanResponse<AnimeRelation[]>>(`${JIKAN_API_BASE}/anime/${id}/relations`);
+};
+
 const fetchAnimeRecommendations = async (id: number): Promise<JikanResponse<RecommendationEntry[]>> => {
   return fetchJson<JikanResponse<RecommendationEntry[]>>(`${JIKAN_API_BASE}/anime/${id}/recommendations`);
 };
@@ -113,16 +130,15 @@ const searchAnime = async (query: string): Promise<JikanResponse<AnimeItem[]>> =
 
 const getImageUrl = (anime: AnimeItem) => anime.images.webp?.large_image_url ?? '';
 
-const formatSynopsis = (text?: string | null) => {
-  if (!text) return null;
-  // Strip out the MAL watermark and trim whitespace
-  return text.replace(/\[Written by MAL Rewrite\]/gi, '').trim();
-};
-
 const normalizeAnime = (anime: AnimeItem): AnimeItem => ({
   ...anime,
   images: anime.images ?? {},
 });
+
+const formatSynopsis = (text?: string | null) => {
+  if (!text) return null;
+  return text.replace(/\[Written by MAL Rewrite\]/gi, '').trim();
+};
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center py-20">
@@ -324,7 +340,7 @@ const AnimeCard = ({ anime, onSelect }: AnimeCardProps) => (
   </div>
 );
 
-const AnimeDetails = ({ anime, onBack, recommendations, onRecommendationSelect }: AnimeDetailsProps) => {
+const AnimeDetails = ({ anime, onBack, recommendations, relations, onRecommendationSelect }: AnimeDetailsProps) => {
   if (!anime) {
     return null;
   }
@@ -404,7 +420,7 @@ const AnimeDetails = ({ anime, onBack, recommendations, onRecommendationSelect }
           </div>
 
           {anime.trailer?.embed_url ? (
-            <div>
+            <div className="mb-8">
               <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold text-white">
                 <Play className="h-5 w-5 text-indigo-400" />
                 Trailer
@@ -416,6 +432,27 @@ const AnimeDetails = ({ anime, onBack, recommendations, onRecommendationSelect }
                   className="h-full w-full"
                   allowFullScreen
                 />
+              </div>
+            </div>
+          ) : null}
+
+          {relations.length > 0 ? (
+            <div className="mb-8">
+              <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold text-white">
+                <Info className="h-5 w-5 text-indigo-400" />
+                Related Media
+              </h3>
+              <div className="flex flex-col gap-4 rounded-2xl border border-slate-800/80 bg-slate-900/50 p-6">
+                {relations.map((rel, index) => (
+                  <div key={`rel-${index}`} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 border-b border-slate-800/50 pb-3 last:border-0 last:pb-0">
+                    <span className="shrink-0 text-sm font-bold uppercase tracking-wider text-indigo-400 sm:w-32">
+                      {rel.relation}
+                    </span>
+                    <span className="text-sm leading-relaxed text-slate-300">
+                      {rel.entry.map((e) => e.name).join(', ')}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           ) : null}
@@ -470,6 +507,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAnime, setSelectedAnime] = useState<AnimeItem | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationEntry[]>([]);
+  const [relations, setRelations] = useState<AnimeRelation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -487,7 +525,7 @@ export default function App() {
         setTopAnime(topRes.data || []);
         topSuccess = true;
       } catch (e) {
-        console.warn('Failed to load top trending anime:', e);
+        console.warn('Failed to load top anime:', e);
         setTopAnime([]);
       }
 
@@ -503,7 +541,6 @@ export default function App() {
         } catch (e) {
           if (retryCount < 1) {
             console.warn('Seasonal anime rate limited, retrying in 1 second...');
-            // Wait another second and try one more time
             await new Promise((resolve) => setTimeout(resolve, 1000));
             await fetchSeasonWithRetry(retryCount + 1);
           } else {
@@ -515,7 +552,6 @@ export default function App() {
 
       await fetchSeasonWithRetry();
 
-      // If both completely failed, show the error state
       if (!topSuccess && !seasonSuccess) {
         setError('Failed to load anime data. Please try again later.');
       }
@@ -549,14 +585,26 @@ export default function App() {
       setIsLoading(true);
       setError(null);
 
-      // 1. Fetch details (Critical for the page to load)
+      // 1. Fetch details
       const detailsResponse = await fetchAnimeDetails(anime.mal_id);
       setSelectedAnime(normalizeAnime(detailsResponse.data));
 
       // Wait 400ms buffer for rate limit
       await new Promise((resolve) => setTimeout(resolve, 400));
+      
+      // 2. Fetch relations
+      try {
+        const relationsResponse = await fetchAnimeRelations(anime.mal_id);
+        setRelations(relationsResponse.data || []);
+      } catch (relError) {
+        console.warn('Failed to load relations:', relError);
+        setRelations([]);
+      }
 
-      // 2. Fetch recommendations (Non-critical, wrap in its own try-catch)
+      // Wait 400ms buffer for rate limit
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
+      // 3. Fetch recommendations
       try {
         const recommendationsResponse = await fetchAnimeRecommendations(anime.mal_id);
         setRecommendations(recommendationsResponse.data || []);
@@ -657,7 +705,7 @@ export default function App() {
                     </div>
                   ) : (
                     <EmptySection
-                      title="Top trending anime is temporarily unavailable"
+                      title="Top rated anime is temporarily unavailable"
                       description="If Jikan is being throttled, the rest of the app still stays usable and you can keep searching anime directly."
                     />
                   )}
@@ -699,6 +747,7 @@ export default function App() {
                     setView(searchQuery ? 'search' : 'home');
                   }}
                   recommendations={recommendations}
+                  relations={relations}
                   onRecommendationSelect={openAnimePage}
                 />
               </div>
