@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   Calendar,
   Info,
-  MonitorPlay,
   Play,
   Search,
   Star,
@@ -142,7 +141,7 @@ const formatSynopsis = (text?: string | null) => {
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center py-20">
-    <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-indigo-500" />
+    <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-teal-500 border-t-2 border-t-orange-500" />
   </div>
 );
 
@@ -181,12 +180,14 @@ const Navbar = ({ onSearch, onHomeClick }: NavbarProps) => {
       }`}
     >
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 md:px-8">
-        <div className="group flex cursor-pointer items-center gap-2" onClick={onHomeClick}>
-          <div className="rounded-xl bg-indigo-600 p-2 transition-colors group-hover:bg-indigo-500">
-            <MonitorPlay className="h-6 w-6 text-white" />
-          </div>
-          <span className="hidden bg-gradient-to-r from-white to-slate-400 bg-clip-text text-xl font-bold text-transparent sm:block">
-            AniDiscover
+        <div className="group flex cursor-pointer items-center gap-3" onClick={onHomeClick}>
+          <img 
+            src="assets/ADT_Project_2026_Logo_Zoomed.png" 
+            alt="Logo" 
+            className="h-10 w-10 rounded-xl object-cover shadow-lg shadow-teal-900/50 transition-transform group-hover:scale-105" 
+          />
+          <span className="hidden bg-gradient-to-r from-teal-400 to-orange-400 bg-clip-text text-xl font-bold text-transparent sm:block">
+            AniWhere
           </span>
         </div>
 
@@ -198,7 +199,7 @@ const Navbar = ({ onSearch, onHomeClick }: NavbarProps) => {
               placeholder="Search anime..."
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              className="w-full rounded-full border border-slate-700 bg-slate-800/80 py-2.5 pl-12 pr-10 text-white transition-all placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full rounded-full border border-slate-700 bg-slate-800/80 py-2.5 pl-12 pr-10 text-white transition-all placeholder:text-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             />
             {query ? (
               <button
@@ -230,13 +231,13 @@ const Hero = ({ anime, onSelect }: HeroProps) => {
       </div>
 
       <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col items-end gap-8 px-4 md:flex-row md:items-end md:px-8">
-        <div className="hidden w-48 shrink-0 overflow-hidden rounded-2xl border border-slate-700/50 shadow-2xl shadow-indigo-500/20 md:block lg:w-64">
+        <div className="hidden w-48 shrink-0 overflow-hidden rounded-2xl border border-slate-700/50 shadow-2xl shadow-teal-500/20 md:block lg:w-64">
           <img src={getImageUrl(anime)} alt={anime.title} className="h-auto w-full object-cover" />
         </div>
 
         <div className="max-w-3xl flex-1">
           <div className="mb-4 flex items-center gap-3">
-            <span className="rounded-full bg-indigo-600 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">
+            <span className="rounded-full bg-orange-500 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">
               #1 Trending
             </span>
             {anime.score ? (
@@ -258,7 +259,7 @@ const Hero = ({ anime, onSelect }: HeroProps) => {
           <div className="flex items-center gap-4">
             <button
               onClick={() => onSelect(anime)}
-              className="flex items-center gap-2 rounded-full bg-indigo-600 px-8 py-3 font-semibold text-white shadow-lg shadow-indigo-600/30 transition-all hover:scale-105 hover:bg-indigo-500 active:scale-95"
+              className="flex items-center gap-2 rounded-full bg-teal-600 px-8 py-3 font-semibold text-white shadow-lg shadow-teal-600/30 transition-all hover:scale-105 hover:bg-teal-500 active:scale-95"
             >
               <Info className="h-5 w-5" />
               More Details
@@ -284,7 +285,7 @@ const Hero = ({ anime, onSelect }: HeroProps) => {
 const AnimeCard = ({ anime, onSelect }: AnimeCardProps) => (
   <div
     onClick={() => onSelect(anime)}
-    className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 transition-all duration-300 hover:-translate-y-2 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20"
+    className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 transition-all duration-300 hover:-translate-y-2 hover:border-teal-500/50 hover:shadow-xl hover:shadow-teal-500/20"
   >
     <div className="relative aspect-[3/4] overflow-hidden bg-slate-800">
       <img
@@ -304,7 +305,7 @@ const AnimeCard = ({ anime, onSelect }: AnimeCardProps) => (
       ) : null}
 
       <div className="absolute bottom-3 right-3 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-        <div className="rounded-full bg-indigo-600 p-3 text-white shadow-lg">
+        <div className="rounded-full bg-teal-600 p-3 text-white shadow-lg">
           <Play className="h-5 w-5 fill-current" />
         </div>
       </div>
@@ -312,7 +313,7 @@ const AnimeCard = ({ anime, onSelect }: AnimeCardProps) => (
 
     <div className="flex flex-1 flex-col justify-between p-4">
       <div>
-        <h3 className="line-clamp-1 font-semibold text-white transition-colors group-hover:text-indigo-400" title={anime.title_english || anime.title}>
+        <h3 className="line-clamp-1 font-semibold text-white transition-colors group-hover:text-teal-400" title={anime.title_english || anime.title}>
           {anime.title_english || anime.title}
         </h3>
         <p className="mt-1 text-xs text-slate-400">
@@ -365,7 +366,7 @@ const AnimeDetails = ({ anime, onBack, recommendations, relations, onRecommendat
 
           <div className="mt-6 grid grid-cols-2 gap-4">
             <div className="rounded-xl border border-slate-700/50 bg-slate-800/50 p-4 text-center">
-              <TrendingUp className="mx-auto mb-2 h-5 w-5 text-indigo-400" />
+              <TrendingUp className="mx-auto mb-2 h-5 w-5 text-orange-400" />
               <div className="text-xs uppercase tracking-wider text-slate-400">Rank</div>
               <div className="text-xl font-bold text-white">#{anime.rank ?? 'N/A'}</div>
             </div>
@@ -379,7 +380,7 @@ const AnimeDetails = ({ anime, onBack, recommendations, relations, onRecommendat
 
         <div className="flex-1">
           <div className="mb-4 flex flex-wrap items-center gap-3">
-            <span className="rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-indigo-400">
+            <span className="rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-teal-400">
               {anime.type || 'TV'}
             </span>
             <span className="flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs font-medium text-slate-300">
@@ -411,7 +412,7 @@ const AnimeDetails = ({ anime, onBack, recommendations, relations, onRecommendat
 
           <div className="mb-8">
             <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold text-white">
-              <Info className="h-5 w-5 text-indigo-400" />
+              <Info className="h-5 w-5 text-teal-400" />
               Synopsis
             </h3>
             <p className="whitespace-pre-wrap rounded-2xl border border-slate-800/80 bg-slate-900/50 p-6 leading-relaxed text-slate-300">
@@ -422,7 +423,7 @@ const AnimeDetails = ({ anime, onBack, recommendations, relations, onRecommendat
           {anime.trailer?.embed_url ? (
             <div className="mb-8">
               <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold text-white">
-                <Play className="h-5 w-5 text-indigo-400" />
+                <Play className="h-5 w-5 text-orange-400" />
                 Trailer
               </h3>
               <div className="aspect-video overflow-hidden rounded-2xl border border-slate-700/50 bg-slate-900 shadow-xl">
@@ -439,13 +440,13 @@ const AnimeDetails = ({ anime, onBack, recommendations, relations, onRecommendat
           {relations.length > 0 ? (
             <div className="mb-8">
               <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold text-white">
-                <Info className="h-5 w-5 text-indigo-400" />
+                <Info className="h-5 w-5 text-teal-400" />
                 Related Media
               </h3>
               <div className="flex flex-col gap-4 rounded-2xl border border-slate-800/80 bg-slate-900/50 p-6">
                 {relations.map((rel, index) => (
                   <div key={`rel-${index}`} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 border-b border-slate-800/50 pb-3 last:border-0 last:pb-0">
-                    <span className="shrink-0 text-sm font-bold uppercase tracking-wider text-indigo-400 sm:w-32">
+                    <span className="shrink-0 text-sm font-bold uppercase tracking-wider text-teal-400 sm:w-32">
                       {rel.relation}
                     </span>
                     <span className="text-sm leading-relaxed text-slate-300">
@@ -459,7 +460,7 @@ const AnimeDetails = ({ anime, onBack, recommendations, relations, onRecommendat
 
           <div className="mt-8">
             <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold text-white">
-              <TrendingUp className="h-5 w-5 text-indigo-400" />
+              <TrendingUp className="h-5 w-5 text-orange-400" />
               Recommendations Based on This Anime
             </h3>
 
@@ -470,7 +471,7 @@ const AnimeDetails = ({ anime, onBack, recommendations, relations, onRecommendat
                     key={item.entry.mal_id}
                     type="button"
                     onClick={() => onRecommendationSelect(item.entry)}
-                    className="group flex items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-left transition-all hover:-translate-y-1 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/10"
+                    className="group flex items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-left transition-all hover:-translate-y-1 hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/10"
                   >
                     <div className="h-20 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-800">
                       {getImageUrl(item.entry) ? (
@@ -479,7 +480,7 @@ const AnimeDetails = ({ anime, onBack, recommendations, relations, onRecommendat
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <h4 className="line-clamp-2 font-semibold text-white transition-colors group-hover:text-indigo-400">
+                      <h4 className="line-clamp-2 font-semibold text-white transition-colors group-hover:text-teal-400">
                         {item.entry.title_english || item.entry.title}
                       </h4>
                       <p className="mt-1 text-sm text-slate-400">{item.votes} votes</p>
@@ -519,7 +520,6 @@ export default function App() {
       let topSuccess = false;
       let seasonSuccess = false;
 
-      // 1. Fetch Top Anime First
       try {
         const topRes = await fetchTopAnime();
         setTopAnime(topRes.data || []);
@@ -529,10 +529,8 @@ export default function App() {
         setTopAnime([]);
       }
 
-      // Wait a full 1 second (1000ms) to guarantee no network overlap
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // 2. Fetch Seasonal Anime Second (Wrapped in a retry function)
       const fetchSeasonWithRetry = async (retryCount = 0) => {
         try {
           const seasonRes = await fetchSeasonAnime();
@@ -585,14 +583,11 @@ export default function App() {
       setIsLoading(true);
       setError(null);
 
-      // 1. Fetch details
       const detailsResponse = await fetchAnimeDetails(anime.mal_id);
       setSelectedAnime(normalizeAnime(detailsResponse.data));
 
-      // Wait 400ms buffer for rate limit
       await new Promise((resolve) => setTimeout(resolve, 400));
       
-      // 2. Fetch relations
       try {
         const relationsResponse = await fetchAnimeRelations(anime.mal_id);
         setRelations(relationsResponse.data || []);
@@ -601,10 +596,8 @@ export default function App() {
         setRelations([]);
       }
 
-      // Wait 400ms buffer for rate limit
       await new Promise((resolve) => setTimeout(resolve, 400));
 
-      // 3. Fetch recommendations
       try {
         const recommendationsResponse = await fetchAnimeRecommendations(anime.mal_id);
         setRecommendations(recommendationsResponse.data || []);
@@ -629,7 +622,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-indigo-500/30 selection:text-indigo-200">
+    <div className="min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-teal-500/30 selection:text-teal-200">
       <Navbar onSearch={handleSearch} onHomeClick={goHome} />
 
       <main>
@@ -656,8 +649,13 @@ export default function App() {
                 ) : (
                   <div className="mx-auto flex min-h-[420px] max-w-7xl items-end px-4 pb-16 md:px-8">
                     <div className="max-w-3xl">
-                      <div className="mb-4 inline-flex rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-indigo-400">
-                        AniDiscover
+                      <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 pr-4 pl-1.5 py-1.5 text-sm font-bold uppercase tracking-wider text-teal-400 shadow-lg shadow-teal-500/10">
+                        <img 
+                          src="ADT_Project_2026_Logo.jpg" 
+                          alt="Logo" 
+                          className="h-6 w-6 rounded-full object-cover" 
+                        />
+                        Anime Discovery Tool
                       </div>
                       <h1 className="mb-4 text-4xl font-extrabold leading-tight text-white md:text-6xl">
                         Discover anime from a real seed title.
@@ -672,7 +670,7 @@ export default function App() {
                 <div className="mx-auto max-w-7xl px-4 py-12 md:px-8">
                   <div className="mb-8 flex items-center justify-between">
                     <h2 className="flex items-center gap-3 text-2xl font-bold text-white md:text-3xl">
-                      <TrendingUp className="h-7 w-7 text-indigo-500" />
+                      <TrendingUp className="h-7 w-7 text-orange-500" />
                       Trending This Season
                     </h2>
                   </div>
@@ -719,7 +717,7 @@ export default function App() {
                   <h1 className="mb-2 text-3xl font-bold text-white">Search Results</h1>
                   <p className="text-lg text-slate-400">
                     Found {searchResults.length} results for{' '}
-                    <span className="font-semibold text-indigo-400">&quot;{searchQuery}&quot;</span>
+                    <span className="font-semibold text-orange-400">&quot;{searchQuery}&quot;</span>
                   </p>
                 </div>
 
