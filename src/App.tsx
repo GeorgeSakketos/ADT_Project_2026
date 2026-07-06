@@ -182,7 +182,7 @@ const Navbar = ({ onSearch, onHomeClick }: NavbarProps) => {
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 md:px-8">
         <div className="group flex cursor-pointer items-center gap-3" onClick={onHomeClick}>
           <img 
-            src="assets/ADT_Project_2026_Logo_Zoomed.png" 
+            src="/assets/ADT_Project_2026_Logo_Zoomed.png" 
             alt="Logo" 
             className="h-10 w-10 rounded-xl object-cover shadow-lg shadow-teal-900/50 transition-transform group-hover:scale-105" 
           />
