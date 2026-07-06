@@ -93,6 +93,10 @@ const fetchTopAnime = async (): Promise<JikanResponse<AnimeItem[]>> => {
   return fetchJson<JikanResponse<AnimeItem[]>>(`${JIKAN_API_BASE}/top/anime?filter=bypopularity&limit=15`);
 };
 
+const fetchSeasonAnime = async (): Promise<JikanResponse<AnimeItem[]>> => {
+  return fetchJson<JikanResponse<AnimeItem[]>>(`${JIKAN_API_BASE}/seasons/now?limit=15`);
+};
+
 const fetchAnimeDetails = async (id: number): Promise<JikanResponse<AnimeItem>> => {
   return fetchJson<JikanResponse<AnimeItem>>(`${JIKAN_API_BASE}/anime/${id}`);
 };
@@ -117,6 +121,13 @@ const normalizeAnime = (anime: AnimeItem): AnimeItem => ({
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center py-20">
     <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-indigo-500" />
+  </div>
+);
+
+const EmptySection = ({ title, description }: { title: string; description: string }) => (
+  <div className="rounded-3xl border border-slate-800 bg-slate-900/50 px-6 py-12 text-center">
+    <h3 className="text-xl font-semibold text-white">{title}</h3>
+    <p className="mx-auto mt-2 max-w-xl text-slate-400">{description}</p>
   </div>
 );
 
@@ -444,6 +455,7 @@ const AnimeDetails = ({ anime, onBack, recommendations, onRecommendationSelect }
 export default function App() {
   const [view, setView] = useState<ViewState>('home');
   const [topAnime, setTopAnime] = useState<AnimeItem[]>([]);
+  const [seasonAnime, setSeasonAnime] = useState<AnimeItem[]>([]);
   const [searchResults, setSearchResults] = useState<AnimeItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAnime, setSelectedAnime] = useState<AnimeItem | null>(null);
@@ -453,15 +465,30 @@ export default function App() {
 
   useEffect(() => {
     const loadInitialData = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetchTopAnime();
-        setTopAnime(response.data || []);
-      } catch {
-        setError('Failed to load trending anime. Please try again later.');
-      } finally {
-        setIsLoading(false);
+      setIsLoading(true);
+      setError(null);
+
+      const [topResult, seasonResult] = await Promise.allSettled([fetchTopAnime(), fetchSeasonAnime()]);
+
+      if (topResult.status === 'fulfilled') {
+        setTopAnime(topResult.value.data || []);
+      } else {
+        console.warn('Failed to load top trending anime:', topResult.reason);
+        setTopAnime([]);
       }
+
+      if (seasonResult.status === 'fulfilled') {
+        setSeasonAnime(seasonResult.value.data || []);
+      } else {
+        console.warn('Failed to load seasonal anime:', seasonResult.reason);
+        setSeasonAnime([]);
+      }
+
+      if (topResult.status === 'rejected' && seasonResult.status === 'rejected') {
+        setError('Failed to load anime data. Please try again later.');
+      }
+
+      setIsLoading(false);
     };
 
     loadInitialData();
@@ -532,9 +559,25 @@ export default function App() {
           </div>
         ) : (
           <>
-            {view === 'home' && topAnime.length > 0 ? (
+            {view === 'home' ? (
               <div className="animate-in fade-in duration-500">
-                <Hero anime={topAnime[0]} onSelect={handleSelectAnime} />
+                {seasonAnime[0] || topAnime[0] ? (
+                  <Hero anime={seasonAnime[0] || topAnime[0]} onSelect={handleSelectAnime} />
+                ) : (
+                  <div className="mx-auto flex min-h-[420px] max-w-7xl items-end px-4 pb-16 md:px-8">
+                    <div className="max-w-3xl">
+                      <div className="mb-4 inline-flex rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-indigo-400">
+                        AniDiscover
+                      </div>
+                      <h1 className="mb-4 text-4xl font-extrabold leading-tight text-white md:text-6xl">
+                        Discover anime from a real seed title.
+                      </h1>
+                      <p className="text-lg leading-relaxed text-slate-300">
+                        Search for a base anime, then open recommendations and related titles from Jikan.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="mx-auto max-w-7xl px-4 py-12 md:px-8">
                   <div className="mb-8 flex items-center justify-between">
@@ -544,11 +587,38 @@ export default function App() {
                     </h2>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6 lg:grid-cols-5 sm:grid-cols-3">
-                    {topAnime.slice(1).map((anime) => (
-                      <AnimeCard key={anime.mal_id} anime={anime} onSelect={handleSelectAnime} />
-                    ))}
+                  {seasonAnime.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-6">
+                      {seasonAnime.slice(0, 10).map((anime, index) => (
+                        <AnimeCard key={`season-${anime.mal_id}-${index}`} anime={anime} onSelect={handleSelectAnime} />
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptySection
+                      title="Seasonal anime is temporarily unavailable"
+                      description="Jikan rate-limited the request, so the page is showing the search and trending shell without hiding the rest of the experience."
+                    />
+                  )}
+
+                  <div className="mb-8 mt-14 flex items-center justify-between">
+                    <h2 className="flex items-center gap-3 text-2xl font-bold text-white md:text-3xl">
+                      <Star className="h-7 w-7 text-yellow-400" />
+                      Top Trending Anime
+                    </h2>
                   </div>
+
+                  {topAnime.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-6">
+                      {topAnime.slice(0, 10).map((anime, index) => (
+                        <AnimeCard key={`top-${anime.mal_id}-${index}`} anime={anime} onSelect={handleSelectAnime} />
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptySection
+                      title="Top trending anime is temporarily unavailable"
+                      description="If Jikan is being throttled, the rest of the app still stays usable and you can keep searching anime directly."
+                    />
+                  )}
                 </div>
               </div>
             ) : null}
@@ -571,8 +641,8 @@ export default function App() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6 lg:grid-cols-5 sm:grid-cols-3">
-                    {searchResults.map((anime) => (
-                      <AnimeCard key={anime.mal_id} anime={anime} onSelect={handleSelectAnime} />
+                    {searchResults.map((anime, index) => (
+                      <AnimeCard key={`search-${anime.mal_id}-${index}`} anime={anime} onSelect={handleSelectAnime} />
                     ))}
                   </div>
                 )}
