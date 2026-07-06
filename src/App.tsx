@@ -217,10 +217,12 @@ const Hero = ({ anime, onSelect }: HeroProps) => {
             <span className="rounded-full bg-indigo-600 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">
               #1 Trending
             </span>
-            <div className="flex items-center gap-1 text-yellow-400">
-              <Star className="h-4 w-4 fill-current" />
-              <span className="font-semibold text-white">{anime.score ?? 'N/A'}</span>
-            </div>
+            {anime.score ? (
+              <div className="flex items-center gap-1 text-yellow-400">
+                <Star className="h-4 w-4 fill-current" />
+                <span className="font-semibold text-white">{anime.score}</span>
+              </div>
+            ) : null}
           </div>
 
           <h1 className="mb-4 text-4xl font-extrabold leading-tight text-white md:text-6xl">
@@ -272,10 +274,12 @@ const AnimeCard = ({ anime, onSelect }: AnimeCardProps) => (
 
       <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-      <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-lg border border-slate-700/50 bg-slate-900/80 px-2.5 py-1 backdrop-blur-md">
-        <Star className="h-3.5 w-3.5 fill-current text-yellow-400" />
-        <span className="text-sm font-bold text-white">{anime.score ?? 'N/A'}</span>
-      </div>
+      {anime.score ? (
+        <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-lg border border-slate-700/50 bg-slate-900/80 px-2.5 py-1 backdrop-blur-md">
+          <Star className="h-3.5 w-3.5 fill-current text-yellow-400" />
+          <span className="text-sm font-bold text-white">{anime.score}</span>
+        </div>
+      ) : null}
 
       <div className="absolute bottom-3 right-3 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
         <div className="rounded-full bg-indigo-600 p-3 text-white shadow-lg">
@@ -346,7 +350,7 @@ const AnimeDetails = ({ anime, onBack, recommendations, onRecommendationSelect }
             <div className="rounded-xl border border-slate-700/50 bg-slate-800/50 p-4 text-center">
               <Star className="mx-auto mb-2 h-5 w-5 fill-current text-yellow-400" />
               <div className="text-xs uppercase tracking-wider text-slate-400">Score</div>
-              <div className="text-xl font-bold text-white">{anime.score ?? 'N/A'}</div>
+              <div className="text-xl font-bold text-white">{anime.score ?? 'TBA'}</div>
             </div>
           </div>
         </div>
@@ -468,23 +472,31 @@ export default function App() {
       setIsLoading(true);
       setError(null);
 
-      const [topResult, seasonResult] = await Promise.allSettled([fetchTopAnime(), fetchSeasonAnime()]);
+      let topSuccess = false;
+      let seasonSuccess = false;
 
-      if (topResult.status === 'fulfilled') {
-        setTopAnime(topResult.value.data || []);
-      } else {
-        console.warn('Failed to load top trending anime:', topResult.reason);
+      try {
+        const topRes = await fetchTopAnime();
+        setTopAnime(topRes.data || []);
+        topSuccess = true;
+      } catch (e) {
+        console.warn('Failed to load top trending anime:', e);
         setTopAnime([]);
       }
 
-      if (seasonResult.status === 'fulfilled') {
-        setSeasonAnime(seasonResult.value.data || []);
-      } else {
-        console.warn('Failed to load seasonal anime:', seasonResult.reason);
+      // Wait 400ms to respect Jikan's strict 3 req/sec rate limit
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
+      try {
+        const seasonRes = await fetchSeasonAnime();
+        setSeasonAnime(seasonRes.data || []);
+        seasonSuccess = true;
+      } catch (e) {
+        console.warn('Failed to load seasonal anime:', e);
         setSeasonAnime([]);
       }
 
-      if (topResult.status === 'rejected' && seasonResult.status === 'rejected') {
+      if (!topSuccess && !seasonSuccess) {
         setError('Failed to load anime data. Please try again later.');
       }
 
@@ -519,6 +531,9 @@ export default function App() {
 
       const detailsResponse = await fetchAnimeDetails(anime.mal_id);
       setSelectedAnime(normalizeAnime(detailsResponse.data));
+
+      // Wait 400ms buffer for rate limit here too
+      await new Promise((resolve) => setTimeout(resolve, 400));
 
       const recommendationsResponse = await fetchAnimeRecommendations(anime.mal_id);
       setRecommendations(recommendationsResponse.data || []);
@@ -596,7 +611,7 @@ export default function App() {
                   ) : (
                     <EmptySection
                       title="Seasonal anime is temporarily unavailable"
-                      description="Jikan rate-limited the request, so the page is showing the search and trending shell without hiding the rest of the experience."
+                      description="API is being rate-limited. Please try again later or search for anime directly."
                     />
                   )}
 
