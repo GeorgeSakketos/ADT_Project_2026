@@ -90,7 +90,7 @@ async function fetchJson<T>(url: string): Promise<T> {
 }
 
 const fetchTopAnime = async (): Promise<JikanResponse<AnimeItem[]>> => {
-  return fetchJson<JikanResponse<AnimeItem[]>>(`${JIKAN_API_BASE}/top/anime?filter=bypopularity&limit=15`);
+  return fetchJson<JikanResponse<AnimeItem[]>>(`${JIKAN_API_BASE}/top/anime?limit=15`);
 };
 
 const fetchSeasonAnime = async (): Promise<JikanResponse<AnimeItem[]>> => {
@@ -112,6 +112,12 @@ const searchAnime = async (query: string): Promise<JikanResponse<AnimeItem[]>> =
 };
 
 const getImageUrl = (anime: AnimeItem) => anime.images.webp?.large_image_url ?? '';
+
+const formatSynopsis = (text?: string | null) => {
+  if (!text) return null;
+  // Strip out the MAL watermark and trim whitespace
+  return text.replace(/\[Written by MAL Rewrite\]/gi, '').trim();
+};
 
 const normalizeAnime = (anime: AnimeItem): AnimeItem => ({
   ...anime,
@@ -229,8 +235,8 @@ const Hero = ({ anime, onSelect }: HeroProps) => {
             {anime.title_english || anime.title}
           </h1>
 
-          <p className="mb-8 text-lg leading-relaxed text-slate-300 line-clamp-3 md:line-clamp-4">
-            {anime.synopsis ?? 'No synopsis available.'}
+          <p className="whitespace-pre-wrap mb-8 text-lg leading-relaxed text-slate-300 line-clamp-3 md:line-clamp-4">
+            {formatSynopsis(anime.synopsis) ?? 'No synopsis available.'}
           </p>
 
           <div className="flex items-center gap-4">
@@ -392,8 +398,8 @@ const AnimeDetails = ({ anime, onBack, recommendations, onRecommendationSelect }
               <Info className="h-5 w-5 text-indigo-400" />
               Synopsis
             </h3>
-            <p className="rounded-2xl border border-slate-800/80 bg-slate-900/50 p-6 leading-relaxed text-slate-300">
-              {anime.synopsis || 'No synopsis available for this title.'}
+            <p className="whitespace-pre-wrap rounded-2xl border border-slate-800/80 bg-slate-900/50 p-6 leading-relaxed text-slate-300">
+              {formatSynopsis(anime.synopsis) ?? 'No synopsis available for this title.'}
             </p>
           </div>
 
@@ -475,6 +481,7 @@ export default function App() {
       let topSuccess = false;
       let seasonSuccess = false;
 
+      // 1. Fetch Top Anime First
       try {
         const topRes = await fetchTopAnime();
         setTopAnime(topRes.data || []);
@@ -484,18 +491,31 @@ export default function App() {
         setTopAnime([]);
       }
 
-      // Wait 400ms to respect Jikan's strict 3 req/sec rate limit
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      // Wait a full 1 second (1000ms) to guarantee no network overlap
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      try {
-        const seasonRes = await fetchSeasonAnime();
-        setSeasonAnime(seasonRes.data || []);
-        seasonSuccess = true;
-      } catch (e) {
-        console.warn('Failed to load seasonal anime:', e);
-        setSeasonAnime([]);
-      }
+      // 2. Fetch Seasonal Anime Second (Wrapped in a retry function)
+      const fetchSeasonWithRetry = async (retryCount = 0) => {
+        try {
+          const seasonRes = await fetchSeasonAnime();
+          setSeasonAnime(seasonRes.data || []);
+          seasonSuccess = true;
+        } catch (e) {
+          if (retryCount < 1) {
+            console.warn('Seasonal anime rate limited, retrying in 1 second...');
+            // Wait another second and try one more time
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await fetchSeasonWithRetry(retryCount + 1);
+          } else {
+            console.warn('Failed to load seasonal anime after retry:', e);
+            setSeasonAnime([]);
+          }
+        }
+      };
 
+      await fetchSeasonWithRetry();
+
+      // If both completely failed, show the error state
       if (!topSuccess && !seasonSuccess) {
         setError('Failed to load anime data. Please try again later.');
       }
@@ -529,14 +549,21 @@ export default function App() {
       setIsLoading(true);
       setError(null);
 
+      // 1. Fetch details (Critical for the page to load)
       const detailsResponse = await fetchAnimeDetails(anime.mal_id);
       setSelectedAnime(normalizeAnime(detailsResponse.data));
 
-      // Wait 400ms buffer for rate limit here too
+      // Wait 400ms buffer for rate limit
       await new Promise((resolve) => setTimeout(resolve, 400));
 
-      const recommendationsResponse = await fetchAnimeRecommendations(anime.mal_id);
-      setRecommendations(recommendationsResponse.data || []);
+      // 2. Fetch recommendations (Non-critical, wrap in its own try-catch)
+      try {
+        const recommendationsResponse = await fetchAnimeRecommendations(anime.mal_id);
+        setRecommendations(recommendationsResponse.data || []);
+      } catch (recError) {
+        console.warn('Failed to load recommendations, failing gracefully:', recError);
+        setRecommendations([]);
+      }
 
       setView('details');
       window.scrollTo(0, 0);
@@ -618,7 +645,7 @@ export default function App() {
                   <div className="mb-8 mt-14 flex items-center justify-between">
                     <h2 className="flex items-center gap-3 text-2xl font-bold text-white md:text-3xl">
                       <Star className="h-7 w-7 text-yellow-400" />
-                      Top Trending Anime
+                      Top Rated Anime of All Time
                     </h2>
                   </div>
 
