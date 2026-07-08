@@ -10,6 +10,9 @@ import {
   X,
 } from 'lucide-react';
 
+import navLogo from './assets/ADT_Project_2026_Logo_Zoomed.png';
+import heroLogo from './assets/ADT_Project_2026_Logo.png';
+
 type AnimeGenre = {
   mal_id: number;
   name: string;
@@ -182,7 +185,7 @@ const Navbar = ({ onSearch, onHomeClick }: NavbarProps) => {
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 md:px-8">
         <div className="group flex cursor-pointer items-center gap-3" onClick={onHomeClick}>
           <img 
-            src="/src/assets/ADT_Project_2026_Logo_Zoomed.png" 
+            src={heroLogo}
             alt="Logo" 
             className="h-10 w-10 rounded-xl object-cover shadow-lg shadow-teal-900/50 transition-transform group-hover:scale-105" 
           />
@@ -651,7 +654,7 @@ export default function App() {
                     <div className="max-w-3xl">
                       <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 pr-4 pl-1.5 py-1.5 text-sm font-bold uppercase tracking-wider text-teal-400 shadow-lg shadow-teal-500/10">
                         <img 
-                          src="/src/assets/ADT_Project_2026_Logo.jpg" 
+                          src={navLogo}
                           alt="Logo" 
                           className="h-6 w-6 rounded-full object-cover" 
                         />
